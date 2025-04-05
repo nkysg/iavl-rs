@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+cargo-expand = "1.0.104"
 crypto-common = "0.1.6"
 double-ended-peekable = "0.1.0"
 integer-encoding = "4.0.2"

@@ -2,6 +2,8 @@ use std::cmp::Ordering;
 
 use double_ended_peekable::{DoubleEndedPeekable, DoubleEndedPeekableExt};
 
+/// I1 is cache iter, I2 is parent iter.
+/// The cache iter may return nil keys to signal that an item
 pub struct MergeIter<I1, I2, K, V>
 where
     K: Ord,

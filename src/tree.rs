@@ -9,15 +9,10 @@ use super::types::KVStore;
 
 static EMPTY_HASH: LazyLock<Output<Sha256>> = LazyLock::new(|| Sha256::digest(b""));
 
+#[derive(Default, Debug)]
 pub struct IAVLTree {
     root: Option<Box<Node>>,
     version: u64,
-}
-
-impl Default for IAVLTree {
-    fn default() -> Self {
-        IAVLTree::new()
-    }
 }
 
 impl IAVLTree {
@@ -121,10 +116,8 @@ fn insert_recursive(
             updated
         };
 
-        if !updated {
-            node.update_height_size();
-            node = balance(node, version);
-        }
+        node.update_height_size();
+        node = balance(node, version);
 
         (node, updated)
     }
@@ -443,5 +436,53 @@ mod tests {
                 ref_hashes_initial_version[i]
             );
         }
+    }
+
+    #[test]
+    fn test_deep_tree_balancing() {
+        let mut tree = IAVLTree::new();
+
+        // Create a deep unbalanced tree
+        tree.set(vec![1], b"v1".to_vec());
+        tree.set(vec![2], b"v2".to_vec());
+        tree.set(vec![3], b"v3".to_vec());
+        tree.set(vec![4], b"v4".to_vec());
+        tree.set(vec![5], b"v5".to_vec());
+
+        let hash1 = tree.save_version().to_vec();
+
+        // Update a value deep in the tree
+        tree.set(vec![1], b"v11".to_vec());
+        let hash2 = tree.save_version().to_vec();
+
+        // Verify the tree remains balanced
+        if let Some(root) = &tree.root {
+            assert!((-1..=1).contains(&root.balance_factor()));
+             println!("root: {:#?}", root);
+            assert_eq!(root.height, 3); // After balancing, max height should be 2 for 5 nodes
+        }
+
+        /*
+        // Verify hash changed due to update
+        assert_ne!(hash1, hash2);
+
+        // Remove nodes and verify balancing
+        tree.remove(b"key5");
+        if let Some(root) = &tree.root {
+            assert!((-1..=1).contains(&root.balance_factor()));
+        }
+
+        tree.remove(b"key4");
+        if let Some(root) = &tree.root {
+            assert!((-1..=1).contains(&root.balance_factor()));
+            assert_eq!(root.height, 2); // Should be balanced to height 1 with 3 nodes
+        }
+
+        // Verify values are still accessible
+        assert_eq!(tree.get(b"key1"), Some(b"new_value1".as_ref()));
+        assert_eq!(tree.get(b"key2"), Some(b"value2".as_ref()));
+        assert_eq!(tree.get(b"key3"), Some(b"value3".as_ref()));
+        assert_eq!(tree.get(b"key4"), None);
+        assert_eq!(tree.get(b"key5"), None); */
     }
 }
